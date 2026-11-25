@@ -8,8 +8,6 @@ import {
 
   AlertCircle,
 
-  CheckCircle2,
-
   ClipboardCopy,
 
   Eye,
@@ -24,21 +22,9 @@ import {
 
   RefreshCw,
 
-  Sparkles,
-
   Wrench,
 
-  Zap,
-
 } from "lucide-react";
-
-
-
-// ============================================================================
-
-// 类型定义（与 lib/arena-agent.ts & app/api/arena/route.ts 对齐）
-
-// ============================================================================
 
 
 
@@ -114,67 +100,15 @@ interface ColumnState {
 
 type ArenaEvent =
 
-  | {
+  | { type: "status"; modelKey: string; modelId: string; status: "thinking" | "calling_tools" | "writing" }
 
-      type: "status";
+  | { type: "tool_call"; modelKey: string; modelId: string; step: number; toolName: string; args: string }
 
-      modelKey: string;
-
-      modelId: string;
-
-      status: "thinking" | "calling_tools" | "writing";
-
-    }
-
-  | {
-
-      type: "tool_call";
-
-      modelKey: string;
-
-      modelId: string;
-
-      step: number;
-
-      toolName: string;
-
-      args: string;
-
-    }
-
-  | {
-
-      type: "tool_result";
-
-      modelKey: string;
-
-      modelId: string;
-
-      step: number;
-
-      toolName: string;
-
-      ok: boolean;
-
-      summary: string;
-
-    }
+  | { type: "tool_result"; modelKey: string; modelId: string; step: number; toolName: string; ok: boolean; summary: string }
 
   | { type: "content"; modelKey: string; modelId: string; text: string }
 
-  | {
-
-      type: "done";
-
-      modelKey: string;
-
-      modelId: string;
-
-      toolCallsCount: number;
-
-      durationMs: number;
-
-    }
+  | { type: "done"; modelKey: string; modelId: string; toolCallsCount: number; durationMs: number }
 
   | { type: "error"; modelKey: string; modelId: string; message: string };
 
@@ -300,7 +234,7 @@ function buildDemoAnalysis(modelId: string, prompt: string) {
 
       ],
 
-      content: `针对「${prompt.slice(0, 18)}...」的跨周期归因：\n\n1. 生理链条：11-23 起步数从 ~8,000 跃升至 12,800–14,100 步，伴随静息心率从 58 bpm 升至 67 bpm，说明负荷激增导致副交感神经在夜间未能充分占优。\n2. 恢复建议：未来 48 小时将训练降级为低强度散步或拉伸，睡前 3 小时避免高心率活动。`,
+      content: `① 已标注异常定位：11-23 至 11-25 睡眠压缩至 5.5–5.7h，静息心率升至 67 bpm。\n② 活动与节律归因：针对「${prompt.slice(0, 16)}...」，近 3 天活动量跃升伴随心率延迟回落，导致夜间副交感神经未能充分占优。\n③ 可执行建议：未来 48 小时降级为低强度拉伸或散步，睡前 3 小时避免高心率活动。`,
 
     };
 
@@ -316,13 +250,13 @@ function buildDemoAnalysis(modelId: string, prompt: string) {
 
       tools: [
 
-        { step: 1, toolName: "read_period_evidence", args: '{"period":"week","end":"2026-11-25"}', summary: "发现 11-23 至 11-25 连续 3 天存在负向睡眠偏差" },
+        { step: 1, toolName: "read_period_evidence", args: '{"period":"week","end":"2026-11-25"}', summary: "发现 11-23 至 11-25 连续 3 天负向睡眠偏差" },
 
-        { step: 2, toolName: "get_wellness_range", args: '{"from":"2026-11-15","to":"2026-11-25"}', summary: "返回 11 条每日明细，静息心率与睡眠时长呈显著负相关" },
+        { step: 2, toolName: "get_wellness_range", args: '{"from":"2026-11-15","to":"2026-11-25"}', summary: "返回 11 日对照明细，静息心率与睡眠时长呈负相关" },
 
       ],
 
-      content: `跨指标关联分析：\n• 睡眠压缩：近 3 天平均睡眠仅 5.6 小时（基线 7.15 小时，下降约 22%）。\n• 心率预警：静息心率连续 3 日高于 65 bpm，提示心血管系统处于累积疲劳状态。\n\n优化建议：建议把高步数/跑量安排在 19:00 前完成，并观察次日晨起静息心率是否回落至 60 bpm 以下。`,
+      content: `① 已标注异常定位：近 3 天平均睡眠 5.6 小时（较基线下降 22%），静息心率连续高于 65 bpm。\n② 活动与节律归因：活动负荷激增与心率抬升高度重合，心血管系统处于累积疲劳期。\n③ 可执行建议：把高步数/跑量提前至 19:00 前，观察晨起静息心率是否回落至 60 bpm 以下。`,
 
     };
 
@@ -342,7 +276,7 @@ function buildDemoAnalysis(modelId: string, prompt: string) {
 
     ],
 
-    content: `核心结论（结构化归因）：\n1. 直接诱因：近 3 日日均步数大幅高于前期基线，且静息心率同步抬升 +7~9 bpm，睡眠结构受到明显挤压。\n2. 下一步行动清单：\n• 今明两晚提前 30 分钟上床，减少睡前屏幕暴露。\n• 暂停高强度训练 2 天，待静息心率回落至 59 bpm 附近再恢复强度。`,
+    content: `① 已标注异常定位：近 3 日静息心率较前期基线抬升 +7~9 bpm，睡眠结构明显受压。\n② 活动与节律归因：连续高步数负荷导致睡前交感神经持续活跃，深度恢复窗口缩短。\n③ 可执行建议：今明两晚提前 30 分钟入睡，暂停高强度训练 2 天待 RHR 回落。`,
 
   };
 
@@ -352,7 +286,7 @@ function buildDemoAnalysis(modelId: string, prompt: string) {
 
 // ============================================================================
 
-// 主组件：支持【真实后端模式】与【静态 Demo 兜底模式（GitHub Pages 可直接交互）】
+// Apple 极简低饱和配色版双模式工作台（#F5F5F7 / #FFFFFF / #1D1D1F / #6E6E73）
 
 // ============================================================================
 
@@ -390,23 +324,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-  // 窗口二（零 API 额度 Sub-Agent 异步中转）状态
-
   const [evidenceText, setEvidenceText] = useState("");
 
   const [loadingEvidence, setLoadingEvidence] = useState(false);
 
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
 
-  const [subReplies, setSubReplies] = useState({
-
-    gpt: "",
-
-    claude: "",
-
-    gemini: "",
-
-  });
+  const [subReplies, setSubReplies] = useState({ gpt: "", claude: "", gemini: "" });
 
 
 
@@ -428,11 +352,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
       if (savedKey) setApiKey(savedKey);
 
-    } catch {
-
-      // ignore storage errors
-
-    }
+    } catch {}
 
 
 
@@ -460,31 +380,17 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
         setIsDemoMode(false);
 
-        if (data?.catalog?.length) {
-
-          setCatalog(data.catalog);
-
-        }
+        if (data?.catalog?.length) setCatalog(data.catalog);
 
         if (data?.defaultModels?.length === 3) {
 
-          setColumns(
-
-            createInitialColumns(
-
-              data.defaultModels.map((m: ArenaModelConfig) => m.modelId)
-
-            )
-
-          );
+          setColumns(createInitialColumns(data.defaultModels.map((m: ArenaModelConfig) => m.modelId)));
 
         }
 
       })
 
       .catch(() => {
-
-        // 静态部署（如 GitHub Pages docs/）检测不到 /api/arena 时自动切换为 Demo 模式
 
         setIsDemoMode(true);
 
@@ -510,21 +416,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
     try {
 
-      if (val.trim()) {
+      if (val.trim()) localStorage.setItem("health_arena_openrouter_key", val.trim());
 
-        localStorage.setItem("health_arena_openrouter_key", val.trim());
+      else localStorage.removeItem("health_arena_openrouter_key");
 
-      } else {
-
-        localStorage.removeItem("health_arena_openrouter_key");
-
-      }
-
-    } catch {
-
-      // ignore
-
-    }
+    } catch {}
 
   };
 
@@ -532,21 +428,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
   const getEffectiveModelId = (col: ColumnState) =>
 
-    col.selectedModelId === "__custom__"
-
-      ? col.customModelId.trim()
-
-      : col.selectedModelId;
+    col.selectedModelId === "__custom__" ? col.customModelId.trim() : col.selectedModelId;
 
 
 
-  const updateColumnByIndex = (
-
-    idx: number,
-
-    updater: (prev: ColumnState) => ColumnState
-
-  ) => {
+  const updateColumnByIndex = (idx: number, updater: (prev: ColumnState) => ColumnState) => {
 
     setColumns((prev) => prev.map((col, i) => (i === idx ? updater(col) : col)));
 
@@ -554,29 +440,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-  const updateColumnByModelId = (
+  const updateColumnByModelId = (modelId: string, updater: (prev: ColumnState) => ColumnState) => {
 
-    modelId: string,
-
-    updater: (prev: ColumnState) => ColumnState
-
-  ) => {
-
-    setColumns((prev) =>
-
-      prev.map((col) =>
-
-        getEffectiveModelId(col) === modelId ? updater(col) : col
-
-      )
-
-    );
+    setColumns((prev) => prev.map((col) => (getEffectiveModelId(col) === modelId ? updater(col) : col)));
 
   };
 
 
-
-  // 纯前端 Demo 并发模拟（用于 docs/ 公开展示）
 
   const runDemoSimulation = (activePrompt: string, modelIds: string[]) => {
 
@@ -604,13 +474,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             status: "calling_tools",
 
-            tools: [
-
-              ...c.tools,
-
-              { step: tool.step, toolName: tool.toolName, args: tool.args },
-
-            ],
+            tools: [...c.tools, { step: tool.step, toolName: tool.toolName, args: tool.args }],
 
           }));
 
@@ -628,15 +492,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             ...c,
 
-            tools: c.tools.map((item, tIdx) =>
-
-              tIdx === c.tools.length - 1
-
-                ? { ...item, ok: true, summary: tool.summary }
-
-                : item
-
-            ),
+            tools: c.tools.map((item, tIdx) => (tIdx === c.tools.length - 1 ? { ...item, ok: true, summary: tool.summary } : item)),
 
           }));
 
@@ -652,13 +508,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
       const tWrite = window.setTimeout(() => {
 
-        updateColumnByIndex(idx, (c) => ({
-
-          ...c,
-
-          status: "writing",
-
-        }));
+        updateColumnByIndex(idx, (c) => ({ ...c, status: "writing" }));
 
       }, elapsed);
 
@@ -686,11 +536,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
         finished += 1;
 
-        if (finished === modelIds.length) {
-
-          setIsRunning(false);
-
-        }
+        if (finished === modelIds.length) setIsRunning(false);
 
       }, elapsed);
 
@@ -701,8 +547,6 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
   };
 
 
-
-  // 窗口一：并发调用 /api/arena SSE（或自动降级为 Demo 演示）
 
   const handleRunArena = async (overridePrompt?: string) => {
 
@@ -814,11 +658,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-      if (!res.body) {
-
-        throw new Error("服务端未返回流式响应");
-
-      }
+      if (!res.body) throw new Error("服务端未返回流式响应");
 
 
 
@@ -872,13 +712,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             if (ev.type === "status") {
 
-              updateColumnByModelId(ev.modelId, (c) => ({
-
-                ...c,
-
-                status: ev.status,
-
-              }));
+              updateColumnByModelId(ev.modelId, (c) => ({ ...c, status: ev.status }));
 
             } else if (ev.type === "tool_call") {
 
@@ -886,13 +720,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 ...c,
 
-                tools: [
-
-                  ...c.tools,
-
-                  { step: ev.step, toolName: ev.toolName, args: ev.args },
-
-                ],
+                tools: [...c.tools, { step: ev.step, toolName: ev.toolName, args: ev.args }],
 
               }));
 
@@ -902,27 +730,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 ...c,
 
-                tools: c.tools.map((t, idx) =>
-
-                  idx === c.tools.length - 1
-
-                    ? { ...t, ok: ev.ok, summary: ev.summary }
-
-                    : t
-
-                ),
+                tools: c.tools.map((t, idx) => (idx === c.tools.length - 1 ? { ...t, ok: ev.ok, summary: ev.summary } : t)),
 
               }));
 
             } else if (ev.type === "content") {
 
-              updateColumnByModelId(ev.modelId, (c) => ({
-
-                ...c,
-
-                content: ev.text,
-
-              }));
+              updateColumnByModelId(ev.modelId, (c) => ({ ...c, content: ev.text }));
 
             } else if (ev.type === "done") {
 
@@ -940,15 +754,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             } else if (ev.type === "error") {
 
-              updateColumnByModelId(ev.modelId, (c) => ({
-
-                ...c,
-
-                status: "error",
-
-                error: ev.message,
-
-              }));
+              updateColumnByModelId(ev.modelId, (c) => ({ ...c, status: "error", error: ev.message }));
 
             }
 
@@ -980,8 +786,6 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-  // 窗口二：拉取真实 /api/trends?range=14d，或在 Demo 模式下自动使用示例证据包
-
   const handleBuildEvidence = async () => {
 
     setLoadingEvidence(true);
@@ -996,25 +800,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
         const res = await fetch("/api/trends?range=14d");
 
-        if (res.ok) {
-
-          payload = await res.json();
-
-        }
+        if (res.ok) payload = await res.json();
 
       }
 
-      const recentPoints = Array.isArray(payload?.points)
+      const recentPoints = Array.isArray(payload?.points) ? payload.points.slice(-7) : [];
 
-        ? payload.points.slice(-7)
-
-        : [];
-
-      const deviations = Array.isArray(payload?.deviations)
-
-        ? payload.deviations
-
-        : [];
+      const deviations = Array.isArray(payload?.deviations) ? payload.deviations : [];
 
 
 
@@ -1072,33 +864,31 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
   return (
 
-    &lt;section className=&quot;space-y-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm sm:p-6&quot;&gt;
+    &lt;section className=&quot;mt-5 space-y-5 rounded-[22px] border border-black/[0.06] bg-[#F5F5F7] p-5 text-[#1D1D1F] sm:p-6&quot;&gt;
 
-      {/* 顶部标题与双窗口切换 */}
+      {/* 顶部标题与 Apple 分段切换 */}
 
       &lt;div className=&quot;flex flex-wrap items-center justify-between gap-3&quot;&gt;
 
-        &lt;div className=&quot;flex flex-wrap items-center gap-2&quot;&gt;
+        &lt;div className=&quot;flex flex-wrap items-baseline gap-2.5&quot;&gt;
 
-          &lt;span className=&quot;inline-flex items-center gap-1 rounded-md bg-blue-600 px-2 py-0.5 text-xs font-medium text-white&quot;&gt;
+          &lt;span className=&quot;text-[11px] font-semibold tracking-wider text-[#86868B] uppercase&quot;&gt;
 
-            &lt;Sparkles className=&quot;h-3.5 w-3.5&quot; /&gt;
-
-            Agent 层
+            Multi-Agent
 
           &lt;/span&gt;
 
-          &lt;h2 className=&quot;text-base font-semibold text-slate-900&quot;&gt;
+          &lt;h2 className=&quot;text-[17px] font-semibold tracking-tight text-[#1D1D1F]&quot;&gt;
 
-            双模式多模型分析工作台
+            双模式多模型并发工作台
 
           &lt;/h2&gt;
 
           {isDemoMode && (
 
-            &lt;span className=&quot;rounded-full bg-amber-50 px-2.5 py-0.5 text-[11px] font-medium text-amber-700 ring-1 ring-amber-600/20&quot;&gt;
+            &lt;span className=&quot;rounded-full bg-black/[0.045] px-2.5 py-0.5 text-[11px] font-medium text-[#6E6E73]&quot;&gt;
 
-              Demo 演示模式（未检测到后端接口）
+              Demo 演示模式
 
             &lt;/span&gt;
 
@@ -1110,7 +900,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
         <div className="flex flex-wrap items-center gap-2 text-xs">
 
-          <div className="flex items-center rounded-xl border border-slate-200 bg-slate-100 p-0.5">
+          <div className="flex items-center rounded-[11px] bg-black/[0.045] p-0.5">
 
             <button
 
@@ -1118,19 +908,19 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
               onClick={() => setActiveTab("api")}
 
-              className={`rounded-lg px-3 py-1.5 font-medium transition ${
+              className={`rounded-[9px] px-3 py-1.5 font-medium transition ${
 
                 activeTab === "api"
 
-                  ? "bg-white text-slate-900 shadow-2xs"
+                  ? "bg-white text-[#1D1D1F] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
 
-                  : "text-slate-500 hover:text-slate-800"
+                  : "text-[#6E6E73] hover:text-[#1D1D1F]"
 
               }`}
 
             >
 
-              窗口一：API 并发分析
+              窗口一 · API 并发
 
             </button>
 
@@ -1146,19 +936,19 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
               }}
 
-              className={`rounded-lg px-3 py-1.5 font-medium transition ${
+              className={`rounded-[9px] px-3 py-1.5 font-medium transition ${
 
                 activeTab === "subagent"
 
-                  ? "bg-white text-slate-900 shadow-2xs"
+                  ? "bg-white text-[#1D1D1F] shadow-[0_1px_3px_rgba(0,0,0,0.08)]"
 
-                  : "text-slate-500 hover:text-slate-800"
+                  : "text-[#6E6E73] hover:text-[#1D1D1F]"
 
               }`}
 
             >
 
-              窗口二：Sub-Agent 零额度异步 (Beta)
+              窗口二 · 零额度异步
 
             </button>
 
@@ -1176,7 +966,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 onClick={() => setShowToolLogs((v) => !v)}
 
-                className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-600 hover:bg-slate-50"
+                className="inline-flex items-center gap-1.5 rounded-[10px] border border-black/[0.06] bg-white px-2.5 py-1.5 text-[#6E6E73] hover:text-[#1D1D1F]"
 
               >
 
@@ -1196,13 +986,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   onClick={() => setShowKeyBox((v) => !v)}
 
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 px-2.5 py-1.5 text-slate-600 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1.5 rounded-[10px] border border-black/[0.06] bg-white px-2.5 py-1.5 text-[#6E6E73] hover:text-[#1D1D1F]"
 
                 >
 
                   <KeyRound className="h-3.5 w-3.5" />
 
-                  OpenRouter Key
+                  Key
 
                 </button>
 
@@ -1226,11 +1016,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
           {showKeyBox && !isDemoMode && (
 
-            <div className="rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs">
+            <div className="rounded-2xl border border-black/[0.06] bg-white p-3.5 text-xs">
 
-              <label className="mb-1.5 block font-medium text-slate-700">
+              <label className="mb-1.5 block font-medium text-[#6E6E73]">
 
-                OpenRouter API Key（若服务端已配置环境变量 OPENROUTER_API_KEY，此处可留空）
+                OpenRouter API Key（若服务端已配置环境变量，此处可留空）
 
               </label>
 
@@ -1244,7 +1034,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 placeholder="sk-or-v1-..."
 
-                className="w-full rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs text-slate-900 focus:border-blue-500 focus:outline-none"
+                className="w-full rounded-xl border border-black/[0.08] bg-[#F5F5F7] px-3 py-2 text-xs text-[#1D1D1F] focus:border-black/25 focus:bg-white focus:outline-none"
 
               />
 
@@ -1254,9 +1044,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
+          {/* 极简输入栏 */}
+
           <div className="space-y-2.5">
 
-            <div className="flex flex-col gap-2 sm:flex-row">
+            <div className="flex flex-col gap-2 rounded-[18px] border border-black/[0.06] bg-white p-2 shadow-[0_2px_10px_rgba(0,0,0,0.02)] sm:flex-row sm:items-center">
 
               <input
 
@@ -1272,9 +1064,9 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 }}
 
-                placeholder="输入健康分析问题，三个模型将各自调用工具交叉验证..."
+                placeholder="输入健康分析问题，三个模型将按需调用工具交叉验证..."
 
-                className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 focus:border-blue-500 focus:bg-white focus:outline-none"
+                className="flex-1 bg-transparent px-3 py-2 text-sm text-[#1D1D1F] placeholder-[#86868B] focus:outline-none"
 
               />
 
@@ -1286,21 +1078,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 onClick={() => handleRunArena()}
 
-                className="inline-flex items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-slate-800 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl bg-[#1D1D1F] px-5 py-2.5 text-xs font-medium text-white transition hover:bg-[#3A3A3C] disabled:opacity-45"
 
               >
 
-                {isRunning ? (
+                {isRunning && <Loader2 className="h-3.5 w-3.5 animate-spin" />}
 
-                  <Loader2 className="h-4 w-4 animate-spin" />
-
-                ) : (
-
-                  <Zap className="h-4 w-4" />
-
-                )}
-
-                {isRunning ? "并发推理中..." : "并发分析"}
+                {isRunning ? "并发推理中" : "并发分析"}
 
               </button>
 
@@ -1310,7 +1094,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             <div className="flex flex-wrap items-center gap-1.5">
 
-              <span className="text-xs text-slate-400">快捷提问：</span>
+              <span className="text-xs text-[#86868B]">快捷提问：</span>
 
               {PRESET_PROMPTS.map((item) => (
 
@@ -1330,7 +1114,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   }}
 
-                  className="rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs text-slate-600 hover:bg-slate-100 disabled:opacity-50"
+                  className="rounded-full border border-black/[0.06] bg-white px-3 py-1 text-xs text-[#515154] transition hover:border-black/15 hover:text-[#1D1D1F] disabled:opacity-45"
 
                 >
 
@@ -1346,7 +1130,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             {globalError && (
 
-              <div className="flex items-center gap-2 rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+              <div className="flex items-center gap-2 rounded-xl border border-[#C06C5B]/25 bg-[#FAF0EE] px-3.5 py-2.5 text-xs text-[#9E4F40]">
 
                 <AlertCircle className="h-4 w-4 shrink-0" />
 
@@ -1360,6 +1144,8 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
+          {/* 三栏卡片 */}
+
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">
 
             {columns.map((col, idx) => (
@@ -1368,11 +1154,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 key={idx}
 
-                className="flex flex-col rounded-2xl border border-slate-200 bg-white shadow-2xs"
+                className="flex flex-col overflow-hidden rounded-[20px] border border-black/[0.055] bg-white shadow-[0_2px_12px_rgba(0,0,0,0.025)]"
 
               >
 
-                <div className="space-y-2 border-b border-slate-100 p-3.5">
+                <div className="space-y-2 border-b border-black/[0.045] px-4 py-3.5">
 
                   <div className="flex items-center justify-between gap-2">
 
@@ -1386,29 +1172,17 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                         const val = e.target.value;
 
-                        setColumns((prev) =>
-
-                          prev.map((c, i) =>
-
-                            i === idx ? { ...c, selectedModelId: val } : c
-
-                          )
-
-                        );
+                        setColumns((prev) => prev.map((c, i) => (i === idx ? { ...c, selectedModelId: val } : c)));
 
                       }}
 
-                      className="max-w-[190px] rounded-lg border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-800 focus:outline-none"
+                      className="max-w-[185px] rounded-lg border border-black/[0.06] bg-[#F5F5F7] px-2.5 py-1 text-xs font-medium text-[#1D1D1F] focus:outline-none"
 
                     >
 
                       {catalog.map((m) => (
 
-                        <option key={m.modelId} value={m.modelId}>
-
-                          {m.label}
-
-                        </option>
+                        <option key={m.modelId} value={m.modelId}>{m.label}</option>
 
                       ))}
 
@@ -1416,9 +1190,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                     </select>
 
-
-
-                    <StatusBadge status={col.status} />
+                    <StatusDot status={col.status} />
 
                   </div>
 
@@ -1436,21 +1208,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                         const val = e.target.value;
 
-                        setColumns((prev) =>
-
-                          prev.map((c, i) =>
-
-                            i === idx ? { ...c, customModelId: val } : c
-
-                          )
-
-                        );
+                        setColumns((prev) => prev.map((c, i) => (i === idx ? { ...c, customModelId: val } : c)));
 
                       }}
 
                       placeholder="例如 openai/gpt-6.2-astra-pro"
 
-                      className="w-full rounded-lg border border-slate-200 px-2.5 py-1 text-xs text-slate-700 focus:border-blue-500 focus:outline-none"
+                      className="w-full rounded-lg border border-black/[0.08] bg-[#F5F5F7] px-2.5 py-1 text-xs text-[#1D1D1F] focus:bg-white focus:outline-none"
 
                     />
 
@@ -1462,39 +1226,21 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                 {showToolLogs && col.tools.length > 0 && (
 
-                  <div className="space-y-1.5 border-b border-slate-100 bg-slate-50/70 p-3 text-xs">
+                  <div className="space-y-1.5 border-b border-black/[0.045] bg-[#FAFAFC] p-3 text-xs">
 
                     {col.tools.map((t, tIdx) => (
 
-                      <div
+                      <div key={tIdx} className="rounded-[10px] border border-black/[0.055] bg-white p-2.5">
 
-                        key={tIdx}
+                        <div className="flex items-center gap-1.5 font-mono text-[11px] font-medium text-[#4A6580]">
 
-                        className="rounded-lg border border-slate-200 bg-white p-2"
+                          <Wrench className="h-3 w-3 shrink-0 opacity-70" />
 
-                      >
-
-                        <div className="flex items-center gap-1.5 font-mono text-[11px] font-medium text-blue-700">
-
-                          <Wrench className="h-3 w-3 shrink-0" />
-
-                          <span className="truncate">
-
-                            #{t.step} {t.toolName}({t.args})
-
-                          </span>
+                          <span className="truncate">#{t.step} {t.toolName}({t.args})</span>
 
                         </div>
 
-                        {t.summary && (
-
-                          <div className="mt-1 text-[11px] text-slate-500">
-
-                            ↳ {t.summary}
-
-                          </div>
-
-                        )}
+                        {t.summary && <div className="mt-1 text-[11px] text-[#6E6E73]">{t.summary}</div>}
 
                       </div>
 
@@ -1506,11 +1252,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-                <div className="min-h-[200px] flex-1 p-4 text-sm leading-relaxed text-slate-700">
+                <div className="min-h-[200px] flex-1 p-4 text-[13px] leading-[1.7] text-[#424245]">
 
                   {col.error ? (
 
-                    <p className="text-xs text-rose-600">调用失败：{col.error}</p>
+                    <p className="text-xs text-[#A65646]">调用失败：{col.error}</p>
 
                   ) : col.content ? (
 
@@ -1518,13 +1264,9 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   ) : (
 
-                    <p className="text-xs text-slate-400">
+                    <p className="text-xs text-[#86868B]">
 
-                      {col.status === "idle"
-
-                        ? "点击“并发分析”后，模型将按需调用工具并在此输出结论。"
-
-                        : "正在分析你的健康数据..."}
+                      {col.status === "idle" ? "点击“并发分析”后，模型将按需调用工具并在此输出结论。" : "正在交叉验证健康数据..."}
 
                     </p>
 
@@ -1534,21 +1276,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-                <div className="flex items-center justify-between border-t border-slate-100 px-4 py-2 text-[11px] text-slate-400">
+                <div className="flex items-center justify-between border-t border-black/[0.045] px-4 py-2.5 text-[11px] text-[#86868B] tabular-nums">
 
-                  <span>工具调用: {col.toolCallsCount} 次</span>
+                  <span>工具调用 {col.toolCallsCount} 次</span>
 
-                  <span>
-
-                    耗时:{" "}
-
-                    {col.durationMs !== null
-
-                      ? `${(col.durationMs / 1000).toFixed(2)}s`
-
-                      : "--"}
-
-                  </span>
+                  <span>{col.durationMs !== null ? `${(col.durationMs / 1000).toFixed(2)}s` : "—"}</span>
 
                 </div>
 
@@ -1562,19 +1294,19 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
       ) : (
 
-        /* 窗口二：Sub-Agent 零 API 额度异步中转模式 (Beta) */
+        /* 窗口二：零 API 额度异步模式 */
 
         <div className="space-y-4">
 
-          <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50/70 px-3.5 py-2.5 text-xs leading-relaxed text-amber-900">
+          <div className="flex items-start gap-2.5 rounded-2xl border border-black/[0.055] bg-white px-4 py-3 text-xs leading-relaxed text-[#515154]">
 
-            <Layers className="mt-0.5 h-4 w-4 shrink-0 text-amber-700" />
+            <Layers className="mt-0.5 h-4 w-4 shrink-0 text-[#86868B]" />
 
             <span>
 
-              <strong>零 API 额度异步模式（Beta）：</strong>
+              <strong className="font-semibold text-[#1D1D1F]">零 API 额度异步模式：</strong>
 
-              当你没有购买 OpenRouter / 官方 API 额度时，可一键把最近 7–14 天数据打包成结构化证据，异步丢进你已订阅的 ChatGPT Plus / Claude Pro / Gemini 网页版，再把三家回复贴回下方同屏对比。
+              未配置 API 密钥时，可直接提取本地健康趋势与异常偏差打包，交给已订阅的网页端 AI 分析，再贴回下方同屏对照。
 
             </span>
 
@@ -1582,13 +1314,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
 
 
-          <div className="space-y-2 rounded-xl border border-slate-200 bg-slate-50/70 p-4">
+          <div className="space-y-2.5 rounded-[20px] border border-black/[0.055] bg-white p-4">
 
             <div className="flex flex-wrap items-center justify-between gap-2">
 
-              <span className="text-xs font-semibold text-slate-800">
+              <span className="text-xs font-medium text-[#1D1D1F]">
 
-                第一步：生成结构化健康证据包（{isDemoMode ? "Demo 示例数据" : "调用本地 /api/trends"}，零大模型费用）
+                结构化健康证据包（{isDemoMode ? "Demo 示例数据" : "本地 /api/trends"}）
 
               </span>
 
@@ -1602,13 +1334,13 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   onClick={handleBuildEvidence}
 
-                  className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 hover:bg-slate-50"
+                  className="inline-flex items-center gap-1.5 rounded-xl border border-black/[0.08] bg-[#F5F5F7] px-3 py-1.5 text-xs font-medium text-[#1D1D1F] hover:bg-black/[0.06]"
 
                 >
 
                   <RefreshCw className={`h-3.5 w-3.5 ${loadingEvidence ? "animate-spin" : ""}`} />
 
-                  刷新证据包
+                  刷新
 
                 </button>
 
@@ -1618,7 +1350,7 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   onClick={handleCopyEvidence}
 
-                  className="inline-flex items-center gap-1.5 rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-slate-800"
+                  className="inline-flex items-center gap-1.5 rounded-xl bg-[#1D1D1F] px-3.5 py-1.5 text-xs font-medium text-white hover:bg-[#3A3A3C]"
 
                 >
 
@@ -1642,15 +1374,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
               value={evidenceText}
 
-              className="w-full rounded-xl border border-slate-200 bg-white p-3 font-mono text-xs leading-relaxed text-slate-700 focus:outline-none"
+              className="w-full rounded-xl border border-black/[0.06] bg-[#F5F5F7] p-3 font-mono text-xs leading-relaxed text-[#424245] focus:outline-none"
 
             />
 
-            {copyStatus && (
-
-              <p className="text-xs font-medium text-emerald-700">{copyStatus}</p>
-
-            )}
+            {copyStatus && <p className="text-xs font-medium text-[#446654]">{copyStatus}</p>}
 
           </div>
 
@@ -1660,31 +1388,21 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
             {[
 
-              { key: "gpt" as const, title: "ChatGPT 网页端回复", tag: "Plus 订阅" },
+              { key: "gpt" as const, title: "ChatGPT 网页端", tag: "Plus" },
 
-              { key: "claude" as const, title: "Claude 网页端回复", tag: "Pro 订阅" },
+              { key: "claude" as const, title: "Claude 网页端", tag: "Pro" },
 
-              { key: "gemini" as const, title: "Gemini / DeepSeek 回复", tag: "网页订阅/免费" },
+              { key: "gemini" as const, title: "Gemini / DeepSeek", tag: "Web" },
 
             ].map((item) => (
 
-              <div
-
-                key={item.key}
-
-                className="space-y-2 rounded-2xl border border-slate-200 bg-white p-3.5 shadow-2xs"
-
-              >
+              <div key={item.key} className="space-y-2 rounded-[20px] border border-black/[0.055] bg-white p-4">
 
                 <div className="flex items-center justify-between text-xs">
 
-                  <span className="font-semibold text-slate-900">{item.title}</span>
+                  <span className="font-semibold text-[#1D1D1F]">{item.title}</span>
 
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] text-slate-600">
-
-                    {item.tag}
-
-                  </span>
+                  <span className="rounded-full bg-[#F5F5F7] px-2 py-0.5 text-[11px] text-[#6E6E73]">{item.tag}</span>
 
                 </div>
 
@@ -1694,21 +1412,11 @@ export function ArenaPanel({ forceDemo }: { forceDemo?: boolean } = {}) {
 
                   value={subReplies[item.key]}
 
-                  onChange={(e) =>
+                  onChange={(e) => setSubReplies((prev) => ({ ...prev, [item.key]: e.target.value }))}
 
-                    setSubReplies((prev) => ({
+                  placeholder={`粘贴 ${item.title} 的分析结果...`}
 
-                      ...prev,
-
-                      [item.key]: e.target.value,
-
-                    }))
-
-                  }
-
-                  placeholder={`将 ${item.title.replace("回复", "")} 的分析结果粘贴到此处对比...`}
-
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 p-3 text-xs text-slate-700 focus:border-blue-500 focus:bg-white focus:outline-none"
+                  className="w-full rounded-xl border border-black/[0.06] bg-[#F5F5F7] p-3 text-xs text-[#424245] focus:border-black/20 focus:bg-white focus:outline-none"
 
                 />
 
@@ -1734,76 +1442,66 @@ export default ArenaPanel;
 
 
 
-function StatusBadge({ status }: { status: ColumnStatus }) {
+function StatusDot({ status }: { status: ColumnStatus }) {
 
-  switch (status) {
+  if (status === "thinking" || status === "calling_tools" || status === "writing") {
 
-    case "thinking":
+    return (
 
-    case "calling_tools":
+      &lt;span className=&quot;inline-flex items-center gap-1.5 text-[11px] font-medium text-[#5B7B9A]&quot;&gt;
 
-    case "writing":
+        &lt;Loader2 className=&quot;h-3 w-3 animate-spin&quot; /&gt;
 
-      return (
+        {status === "calling_tools" ? "查数中" : status === "writing" ? "总结中" : "思考中"}
 
-        &lt;span className=&quot;inline-flex items-center gap-1 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-medium text-blue-700&quot;&gt;
+      &lt;/span&gt;
 
-          &lt;Loader2 className=&quot;h-3 w-3 animate-spin&quot; /&gt;
-
-          {status === "calling_tools"
-
-            ? "调用工具中"
-
-            : status === "writing"
-
-              ? "生成结论中"
-
-              : "思考中"}
-
-        &lt;/span&gt;
-
-      );
-
-    case "done":
-
-      return (
-
-        &lt;span className=&quot;inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700&quot;&gt;
-
-          &lt;CheckCircle2 className=&quot;h-3 w-3&quot; /&gt;
-
-          已完成
-
-        &lt;/span&gt;
-
-      );
-
-    case "error":
-
-      return (
-
-        &lt;span className=&quot;inline-flex items-center gap-1 rounded-full bg-rose-50 px-2 py-0.5 text-[11px] font-medium text-rose-700&quot;&gt;
-
-          &lt;AlertCircle className=&quot;h-3 w-3&quot; /&gt;
-
-          异常
-
-        &lt;/span&gt;
-
-      );
-
-    default:
-
-      return (
-
-        &lt;span className=&quot;rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-500&quot;&gt;
-
-          待命
-
-        &lt;/span&gt;
-
-      );
+    );
 
   }
+
+  if (status === "done") {
+
+    return (
+
+      &lt;span className=&quot;inline-flex items-center gap-1.5 text-[11px] font-medium text-[#446654]&quot;&gt;
+
+        &lt;span className=&quot;h-1.5 w-1.5 rounded-full bg-[#527965]&quot; /&gt;
+
+        已完成
+
+      &lt;/span&gt;
+
+    );
+
+  }
+
+  if (status === "error") {
+
+    return (
+
+      &lt;span className=&quot;inline-flex items-center gap-1.5 text-[11px] font-medium text-[#A65646]&quot;&gt;
+
+        &lt;span className=&quot;h-1.5 w-1.5 rounded-full bg-[#C06C5B]&quot; /&gt;
+
+        异常
+
+      &lt;/span&gt;
+
+    );
+
+  }
+
+  return (
+
+    &lt;span className=&quot;inline-flex items-center gap-1.5 text-[11px] text-[#86868B]&quot;&gt;
+
+      &lt;span className=&quot;h-1.5 w-1.5 rounded-full bg-black/20&quot; /&gt;
+
+      待命
+
+    &lt;/span&gt;
+
+  );
 
 }
