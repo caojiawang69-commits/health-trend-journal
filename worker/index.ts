@@ -1,3 +1,5 @@
+export {PersonalAccount} from './accounts';
+import {accountRequest} from './accounts';
 import handler from 'vinext/server/fetch-handler';
 import {timingSafeEqual} from 'node:crypto';
 import {Buffer} from 'node:buffer';
@@ -10,10 +12,11 @@ export default {
   const {runScheduledGarmin}=await import('../lib/health');
   await runScheduledGarmin(controller.scheduledTime,controller.cron);
  },
- fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
+ async fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
   const path=new URL(request.url).pathname;
+  if(path.startsWith('/account/')) return accountRequest(request,env);
   if (['GET','HEAD'].includes(request.method) && ['/demo','/demo/'].includes(path)) return handler.fetch(request,env,ctx);
-  if (path==='/' && !env.DB && request.method==='GET') return Response.redirect(new URL('/demo',request.url).href,302);
+  if (path==='/' && !env.DB && request.method==='GET') return Response.redirect(new URL('/account/space',request.url).href,302);
   const service=path==='/mcp'||path==='/api/service';
   const secret=service?env.SERVICE_TOKEN:env.OWNER_PASSWORD;
   if(!secret||secret.length<24)return new Response('Configure private access before using this instance.',{status:503});

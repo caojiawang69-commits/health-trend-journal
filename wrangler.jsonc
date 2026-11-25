@@ -5,5 +5,33 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "vars": {"ENABLE_ARENA":"false"}
+  "vars": {
+    "ENABLE_ARENA": "false"
+  },
+  "durable_objects": {
+    "bindings": [
+      {
+        "name": "PERSONAL_ACCOUNTS",
+        "class_name": "PersonalAccount"
+      }
+    ]
+  },
+  "migrations": [
+    {
+      "tag": "personal-accounts-v1",
+      "new_sqlite_classes": [
+        "PersonalAccount"
+      ]
+    }
+  ],
+  "ratelimits": [
+    {
+      "name": "ACCOUNT_LIMIT",
+      "namespace_id": "10301",
+      "simple": {
+        "limit": 12,
+        "period": 60
+      }
+    }
+  ]
 }

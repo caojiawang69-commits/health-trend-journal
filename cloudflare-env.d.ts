@@ -1,5 +1,7 @@
 declare namespace Cloudflare {
   interface Env {
+    PERSONAL_ACCOUNTS?: DurableObjectNamespace;
+    ACCOUNT_LIMIT?: RateLimit;
     OWNER_PASSWORD?: string;
     SERVICE_TOKEN?: string;
     HEALTH_PROVIDER?: string;

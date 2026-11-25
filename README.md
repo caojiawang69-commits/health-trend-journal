@@ -88,3 +88,7 @@ flowchart LR
 本分支默认部署无存储演示。Workers Builds 选择生产分支 `feat/multi-model-arena`，构建命令使用 `npm run build`，发布命令使用 `npx wrangler deploy --config dist/server/wrangler.json`。访问 `/demo` 即可体验，GitHub Pages 的发布源为本分支的 `/docs`。
 
 私人实例需先创建自己的 D1 数据库，在 wrangler.jsonc 的 d1_databases 中配置 binding 为 DB、真实 database_id 和 migrations_dir 为 drizzle，应用迁移后再启用同步计划。照片功能另需 R2 的 BUCKET 绑定。配置所有者密码、模型网关及可用模型后，将 ENABLE_ARENA 设为 true 可启用在线推理。设回 false 并应用配置即可关闭该接口。
+
+## 个人账号
+
+公开首页提供注册、登录和示例三个入口。正式账号使用用户名和密码。每位用户的 SQLite 数据、个人备注和登录会话保存在独立的 Durable Object 中。首次注册进入空白空间，用户可以用自己的 Garmin 个人密钥导入最近 30 个已结束日历日的步数和睡眠，并查看记录与平均睡眠时长。此入口当前为手动导入，密钥仅用于当次请求；原所有者工作台和公开的合成数据演示分别保留。账号目前没有邮件找回功能。
