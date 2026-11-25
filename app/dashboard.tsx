@@ -2,6 +2,7 @@
 import PlanPanel from './plan-panel';
 import GarminConnection from './garmin-connection';
 import HealthTrends from './health-trends';
+import { ArenaPanel } from './arena-panel';
 import {activityTrend} from '../lib/activity-trend';
 import {useEffect,useRef,useState} from 'react';
 import {Camera,TrendingUp,ArrowUpRight,RefreshCw,Plus,Check,ChevronLeft,ChevronRight,Utensils,Coffee,Cloud,Activity,X,ImagePlus,BookOpen,Settings,Leaf} from 'lucide-react';
@@ -31,6 +32,7 @@ export default function Dashboard({initialView='trends'}:{initialView?:string}){
  {error&&<div className="alert">{error} <button onClick={load}>重新加载</button></div>}{notice&&!modal&&<div className="toast" role="status">{notice}<button aria-label="关闭提示" onClick={()=>setNotice('')}><X size={16}/></button></div>}
  {(view==='journal'||view==='insights')&&<div className="datebar"><div><button aria-label="前一天" onClick={()=>shift(-1)}><ChevronLeft size={18}/></button><strong>{dateLabel}</strong><button aria-label="后一天" disabled={date>=dateKey(new Date())} onClick={()=>shift(1)}><ChevronRight size={18}/></button></div><button onClick={()=>setDate(dateKey(new Date()))}>回到今天</button></div>}
  {view==='trends'&&<><p className="trend-demo-link"><a href="/demo">查看模拟数据演示</a></p><HealthTrends lastSync={data?.settings.lastSync} onSettings={()=>setView('settings')}/>
+  <ArenaPanel />
  {data&&movement.alert&&<section className="card trend"><div className="sectiontitle"><h2>日常活动变化</h2><span>近 3 个已结束的日历日</span></div>{movement.typicalSteps===null&&movement.typicalFloors===null?<p className="muted">再积累几天佳明记录，就能与平时的活动量对比。</p>:<><p>平时每天约 {fmt(movement.typicalSteps)} 步、上楼 {fmt(movement.typicalFloors)} 层（近 4 周中位数）。</p>{movement.recent.length>0&&<ul>{movement.recent.map(p=><li key={p.date}>{p.date.slice(5)}：{fmt(p.steps)} 步 · 上楼 {fmt(p.floors)} 层</li>)}</ul>}{movement.alert&&<div className="quietnote">最近 3 天里有 {movement.elevatedDays} 天的步数或上楼量明显高于平时。如果这几天有出差、长时间步行或其他额外活动，可以留意疲劳和睡眠；感觉累时，下一次训练可以安排轻一点。</div>}<p className="muted">只比较有数据的日期，不根据活动量判断你是否出差。</p></>}</section>}
  </>}
  {view==='insights'&&<section className="card feedback"><div className="sectiontitle"><span className="iconbox small"><BookOpen size={18}/></span><h2>每日反馈</h2><span className="tinylabel">{report?'已更新':'待生成'}</span></div><button className="textbutton" disabled={busy||!data?.aiConfigured} onClick={feedback}>{busy?'正在处理…':'生成这一天的反馈'}</button>{!data?.aiConfigured&&<p className="muted">AI 云端连接尚未完成</p>}{report?<div className="reporttext">{report.body}</div>:<><h3>先记录，再发现。</h3><p>你的反馈会显示在这里。我们会结合佳明数据和饮食记录，区分事实、估计与建议。</p><div className="quietnote">{data?.settings.schedule?'云端任务运行后更新反馈':'反馈任务正在接入；当前没有生成的 AI 报告。'}</div></>}</section>}
