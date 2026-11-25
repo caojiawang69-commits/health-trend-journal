@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "sqlite",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "6",
+      "when": 1792937182167,
+      "tag": "0000_lethal_hulk",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "6",
+      "when": 1792989416353,
+      "tag": "0001_lucky_lord_hawal",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1795605135249,
+      "tag": "0002_health_date_kind",
+      "breakpoints": true
+    }
+  ]
+}

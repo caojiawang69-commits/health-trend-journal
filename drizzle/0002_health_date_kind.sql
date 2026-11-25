@@ -1,0 +1,1 @@
+CREATE INDEX IF NOT EXISTS `health_date_kind_idx` ON `health` (`date`,`kind`);

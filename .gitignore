@@ -1,0 +1,16 @@
+node_modules/
+dist/
+demo-dist/
+.next/
+.vinext/
+.wrangler/
+.dev.vars*
+.env*
+private/
+*.dpapi
+*.sqlite*
+*.db
+*.log
+*.tsbuildinfo
+*.zip
+*.tar.gz

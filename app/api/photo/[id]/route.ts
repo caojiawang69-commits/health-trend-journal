@@ -1,0 +1,4 @@
+import {env} from 'cloudflare:workers';
+import {getChatGPTUser} from '../../../chatgpt-auth';
+import {db} from '../../../../lib/health';
+export async function GET(req:Request,{params}:{params:Promise<{id:string}>}){if(!await getChatGPTUser())return new Response('请登录',{status:401});const {id}=await params;const row=await db().prepare('SELECT before_key,after_key FROM meals WHERE id=?').bind(id).first<any>();const key=new URL(req.url).searchParams.get('phase')==='after'?row?.after_key:row?.before_key;if(!key)return new Response('没有照片',{status:404});const obj=await env.BUCKET?.get(key);if(!obj)return new Response('没有照片',{status:404});return new Response(obj.body,{headers:{'Content-Type':obj.httpMetadata?.contentType||'image/jpeg','Cache-Control':'private, max-age=300','X-Content-Type-Options':'nosniff'}});}

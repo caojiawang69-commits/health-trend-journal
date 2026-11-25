@@ -1,0 +1,1 @@
+ALTER TABLE `meals` ADD `after_occurred` text;
