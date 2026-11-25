@@ -29,19 +29,7 @@ function addOneDay(dateStr: string): string {
  * 复用你现有的 owner 登录态、SERVICE_TOKEN 或 oai-authenticated-user-id 校验
  */
 async function isAuthorizedRequest(request: Request): Promise<boolean> {
-  const serviceToken = getEnv("SERVICE_TOKEN");
-  const authHeader = request.headers.get("authorization");
-  if (serviceToken && authHeader === `Bearer ${serviceToken}`) {
-    return true;
-  }
-  if (request.headers.get("oai-authenticated-user-id")) {
-    return true;
-  }
-  const cookie = request.headers.get("cookie") ?? "";
-  if (cookie.includes("owner")) {
-    return true;
-  }
-  return !getEnv("OWNER_PASSWORD");
+  return request.headers.get("oai-authenticated-user-id") === "owner";
 }
 
 /**

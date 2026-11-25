@@ -12,6 +12,8 @@ export default {
  },
  fetch(request:Request,env:Cloudflare.Env,ctx:ExecutionContext){
   const path=new URL(request.url).pathname;
+  if (['GET','HEAD'].includes(request.method) && ['/demo','/demo/'].includes(path)) return handler.fetch(request,env,ctx);
+  if (path==='/' && !env.DB && request.method==='GET') return Response.redirect(new URL('/demo',request.url).href,302);
   const service=path==='/mcp'||path==='/api/service';
   const secret=service?env.SERVICE_TOKEN:env.OWNER_PASSWORD;
   if(!secret||secret.length<24)return new Response('Configure private access before using this instance.',{status:503});

@@ -58,3 +58,33 @@ npm run test:consumer
 ```
 
 测试使用合成数据、临时数据库及模拟的上游响应，覆盖授权、凭据加密保存、三类来源同步和趋势读取。图中的偏离阈值用于回看个人记录，不作医学诊断。
+
+## 多模型分析工作台
+
+[打开公开演示](https://caojiawang69-commits.github.io/health-trend-journal/#arena)。点击「并发分析」查看三栏合成结果、工具调用和用时。演示中的模型名称、耗时和回答均为示例。
+
+![三栏工作台的合成数据演示](media/arena-demo.png)
+
+```mermaid
+flowchart LR
+  UI[React 工作台] -->|POST| Route[工作台 API]
+  Route --> Agents[三个并发模型任务]
+  Agents --> Tools[带参数校验的工具]
+  Tools --> Adapter[HealthDataAdapter]
+  Adapter --> Evidence[日级观测与周期基线]
+  Evidence --> DB[(D1)]
+  Route -->|SSE 工具轨迹和结果| UI
+  UI --> Static[本地合成演示]
+```
+
+| 模块 | 职责 |
+| --- | --- |
+| [基线查询](lib/trend-query.ts) | 用代码汇总观测、计算基线和标记偏离日期。 |
+| [工具与适配器](lib/agent-tools.ts) | 校验三个工具的输入，由调用方提供日级查询、周期证据读取和回顾写入。 |
+| [模型调度](lib/arena-agent.ts) | 各模型独立执行多轮工具调用，以 Promise.allSettled 汇总。三栏供读者交叉核对证据，观测上的关联仍需进一步验证。 |
+| [服务入口](app/api/arena/route.ts) | 连接私人数据适配器，通过 SSE 返回工具轨迹和每栏结果。 |
+| [工作台](app/arena-panel.tsx) | 支持在线推理、导出证据包供外部分析，以及公开演示。外部分析窗口目前由用户传递证据和结果。 |
+
+本分支默认部署无存储演示。Workers Builds 选择生产分支 `feat/multi-model-arena`，构建命令使用 `npm run build`，发布命令使用 `npx wrangler deploy --config dist/server/wrangler.json`。访问 `/demo` 即可体验，GitHub Pages 的发布源为本分支的 `/docs`。
+
+私人实例需先创建自己的 D1 数据库，在 wrangler.jsonc 的 d1_databases 中配置 binding 为 DB、真实 database_id 和 migrations_dir 为 drizzle，应用迁移后再启用同步计划。照片功能另需 R2 的 BUCKET 绑定。配置所有者密码、模型网关及可用模型后，将 ENABLE_ARENA 设为 true 可启用在线推理。设回 false 并应用配置即可关闭该接口。

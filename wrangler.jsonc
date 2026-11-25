@@ -5,19 +5,5 @@
   "compatibility_flags": [
     "nodejs_compat"
   ],
-  "triggers": {
-    "crons": [
-      "0 15 * * *",
-      "30 15 * * *",
-      "0 17 * * *"
-    ]
-  },
-  "d1_databases": [
-    {
-      "binding": "DB",
-      "database_name": "health-journal",
-      "database_id": "00000000-0000-4000-8000-000000000000",
-      "migrations_dir": "drizzle"
-    }
-  ]
+  "vars": {"ENABLE_ARENA":"false"}
 }
