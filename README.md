@@ -6,7 +6,7 @@
     
 用个人基线观察睡眠、心率和活动量怎样随时间变化。趋势页支持近 30 天、90 天、半年、一年和全部历史。周均和月均曲线可以展开到触发偏离标记的具体日期。
 
-**[打开交互演示](https://caojiawang69-commits.github.io/health-trend-journal/)** · **[模块使用手册](MODULES.md)** · [MIT 许可证](LICENSE)
+**[打开交互演示](https://caojiawang69-commits.github.io/health-trend-journal/)** · **[模块使用手册](MODULES.md)** · [四种外部项目接入实测](MODULES.md#external-consumer) · [MIT 许可证](LICENSE)
 
 按你要复用的功能进入手册：[登录组件](MODULES.md#login-ui) · [请求鉴权](MODULES.md#request-auth) · [密钥加密](MODULES.md#encryption) · [API 客户端](MODULES.md#api-client) · [图表数据结构](MODULES.md#chart-data) · [替换分析算法](MODULES.md#analysis)。
 
@@ -54,6 +54,7 @@ Daily JSON 接口接收 `from` 和 `to` 两个日期（含首尾），返回每�
 npm run typecheck
 npm run build
 npm test
+npm run test:consumer
 ```
 
 测试使用合成数据、临时数据库及模拟的上游响应，覆盖授权、凭据加密保存、三类来源同步和趋势读取。图中的偏离阈值用于回看个人记录，不作医学诊断。

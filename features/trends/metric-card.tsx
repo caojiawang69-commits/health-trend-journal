@@ -3,7 +3,7 @@ import {useId,useState} from 'react';
 import {Activity,Flame,Footprints,Heart,Layers,Moon,Timer,Waves} from 'lucide-react';
 import {Bar,BarChart,CartesianGrid,Line,LineChart,ReferenceDot,ResponsiveContainer,Tooltip,XAxis,YAxis} from 'recharts';
 import {summarizeTrend,monthStart,weekStart} from './model';
-import type {HealthMetric,TrendPayload} from './model';
+import type {HealthMetric,MetricSeries} from './model';
 import {metrics,metricValue} from './metrics';
 
 const icons={hrv:Activity,sleep:Moon,sleepScore:Moon,resting:Heart,steps:Footprints,floors:Layers,intensity:Timer,calories:Flame,stress:Waves};
@@ -13,10 +13,11 @@ const companions:Partial<Record<CardMetric,HealthMetric[]>>={
 };
 const lines:Partial<Record<CardMetric,HealthMetric[]>>={steps:['stepGoal'],calories:['activeCalories','restCalories']};
 const stages=['deep','light','rem','awake'] as const;
-function labelDate(date:string,scale:TrendPayload['scale']){
+function labelDate(date:string,scale:MetricSeries['scale']){
  return scale==='month'?date.slice(0,7):date.slice(5).replace('-','/');
 }
-export default function MetricCard({metric,payload,featured=false}:{metric:CardMetric;payload:TrendPayload;featured?:boolean}){
+type MetricCardProps={metric:CardMetric;payload:MetricSeries;featured?:boolean;baselineDescription?:string};
+export default function MetricCard({metric,payload,featured=false,baselineDescription='此前 28 天的中位数'}:MetricCardProps){
  const id=useId(),{label,unit,color}=metrics[metric],Icon=icons[metric];
  const {points,scale}=payload,stats=summarizeTrend(points,metric);
  const [limit,setLimit]=useState(10);
@@ -30,7 +31,7 @@ export default function MetricCard({metric,payload,featured=false}:{metric:CardM
  const stagePresent=points.some(point=>stages.every(stage=>point[stage]!==null));
  return <section className={'card history-card health-metric'+(featured?' health-metric-featured':'')} aria-labelledby={id}>
   <div className="sectiontitle"><Icon size={21} style={{color}} aria-hidden="true"/><h3 id={id}>{label}</h3></div>
-  {stats.average===null?<p className="muted">{metric==='hrv'?'这段时间没有收到佳明的夜间 HRV 记录。':'这段时间没有可用记录。'}</p>:<>
+  {stats.average===null?<p className="muted">这段时间没有可用的{label}记录。</p>:<>
    <div className="health-metric-readings"><div className="health-main-value"><strong>{metricValue(stats.average,metric)}</strong><span>{unit}</span><small>日均 · {stats.count}/{payload.days} 天</small></div>
     {summaries.filter(s=>s.average!==null).map(s=><div className="health-secondary" key={s.key}><strong style={(lines[metric]??[]).includes(s.key)?{color:metrics[s.key].color}:undefined}>{metricValue(s.average!,s.key)} <span>{metrics[s.key].unit}</span></strong><small>平均{metrics[s.key].label}</small></div>)}
    </div>
@@ -44,7 +45,7 @@ export default function MetricCard({metric,payload,featured=false}:{metric:CardM
     {points.filter(p=>buckets.has(p.date)&&p[metric]!==null).map(p=><ReferenceDot key={p.date} x={p.date} y={p[metric]!} r={4.5} fill="#fff" stroke="#a14c00" strokeWidth={2.5}/>)}
    </LineChart></ResponsiveContainer></div>
    {flagged.length?<details className="sleep-details"><summary>偏离个人基线 · {flagged.length} 天</summary>
-    <p className="health-metric-note">{scale==='day'?'橙色圆点标出偏离的日期。':'橙色圆点表示这个周期内有偏离的日期，曲线显示周期平均值。'}以下按日期列出实测值和此前 28 天的中位数。</p>
+    <p className="health-metric-note">{scale==='day'?'橙色圆点标出偏离的日期。':'橙色圆点表示这个周期内有偏离的日期，曲线显示周期平均值。'}以下按日期列出实测值和{baselineDescription}。</p>
     <ul>{flagged.slice(0,limit).map(f=><li key={f.date}>{f.date} · <strong>{metricValue(f.value,metric)} {unit}</strong>，平时 {metricValue(f.median,metric)} {unit}（{f.samples} 天）</li>)}</ul>
     {limit<flagged.length&&<button className="textbutton" onClick={()=>setLimit(n=>n+20)}>显示更多日期</button>}
    </details>:<p className="health-metric-note">{assessed?`已比较 ${assessed} 天，未触发偏离标记。`:'当前日期缺少足够的个人基线。'}</p>}

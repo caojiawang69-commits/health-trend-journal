@@ -123,7 +123,9 @@ export function TrendsPage() {
 | `deviations` | `flags` 是带日期的偏离记录；`assessed` 记录每个受跟踪指标有多少天够资格比较；`lastObserved` 是最近有观测的日期或 `null`。 |
 | `comparison` | 两个 28 天窗口的起始日 `recentFrom`、`baselineFrom`，以及逐指标的比较结果 `changes`。 |
 
-要把面板移到另一个 React 项目，复制 [trends 目录](features/trends)、[日期工具](lib/calendar.ts)、[回顾类型](features/analysis/period.ts) 和 [偏离类型及实现](features/analysis/deviations.ts)，安装 `recharts` 与 `lucide-react`，并引入或改写 [图表样式](app/globals.css)。要先看一个完整的输入对象，可直接调用 `exampleTrends('30')`。[合成数据生成器](features/demo/example-data.ts) · [公开演示如何使用同一面板](showcase/main.tsx)
+只嵌入一张图卡时，复制 [MetricCard](features/trends/metric-card.tsx)、[数据结构](features/trends/model.ts)、[指标定义](features/trends/metrics.ts) 和 [日期工具](lib/calendar.ts)。React 项目还需安装 `recharts` 和 `lucide-react`。传入 `metric` 与 `payload: MetricSeries`，其中包含 `scale`、`days`、`points`、`deviations`。自定义偏离规则时可用 `baselineDescription` 说明比较依据。图卡面向已定义的健康指标，部分活动指标的注释沿用佳明口径。[独立 React 接入示例](examples/consumer/react-chart.tsx)
+
+要复用整个面板，复制 [trends 目录](features/trends)、[日期工具](lib/calendar.ts)、[回顾类型](features/analysis/period.ts)，并引入或改写 [图表样式](app/globals.css)。整页面板需要完整的 `TrendPayload`，包含两个 28 天窗口的对比。可用 `exampleTrends('30')` 查看一份完整输入。[合成数据生成器](features/demo/example-data.ts) · [公开演示入口](showcase/main.tsx)
 
 <a id="analysis"></a>
 
@@ -132,6 +134,35 @@ export function TrendsPage() {
 - **给图上的某天加标记**：`detectDeviations(points, from)` 接收日级 `TrendPoint[]`。给待展示区间额外传入之前 28 天的记录作基线，每天与此前至少 14 次有效观测比较。输出的每个标记包含 `date`、`metric`、`value`、`median` 和 `samples`。若要换算法，在产生 `deviations` 的地方返回同一结构即可。长区间图表仍能展开到原始日期。[偏离检测](features/analysis/deviations.ts) · [查询层调用位置](lib/trend-query.ts)
 - **比较两个时期**：`compareTrend(recent, baseline)` 输出每个指标在两个窗口的平均值、覆盖天数和变化量。面板里的「和自己的平时相比」使用这组结果。[时期比较](features/analysis/compare.ts)
 - **生成文字回顾**：内置生成接口用 `reviewEvidence` 整理趋势证据，`ReviewGenerator` 接收证据并异步返回文本。接自己的模型时，在生成路由换掉适配器及其密钥检查。若分析在外部聊天运行，可通过现有 MCP 工具读证据、写回顾。[证据与接口](features/analysis/review.ts) · [生成路由](app/api/trend-review/route.ts) · [聊天工具](app/mcp/route.ts)
+
+<a id="external-consumer"></a>
+
+## 把模块嵌入另一个项目
+
+下面四个引用方各自在临时目录构建。每个目录只复制该例用到的源码，共用已安装的第三方依赖。示例使用合成记录，可在本机重跑。[测试入口和逐例文件清单](tests/consumer.mjs)
+
+| 引用方想保留什么 | 自己提供什么 | 实测结果 |
+| --- | --- | --- |
+| [一张 React 趋势图卡](examples/consumer/react-chart.tsx) | [分页 POST 客户端](examples/consumer/external-api.ts)通过自定义请求头认证，将微秒换算为毫秒。[自定义规则](examples/consumer/own-rule.ts)与此前三个有效夜晚的中位数比较。 | 图表标出 3 月 4 日和 18 日。浏览器展开详情，显示两次测量值和自定义基线说明。 |
+| [原有偏离检测算法](features/analysis/deviations.ts) | 同一个分页接口，配[自己的 SVG 图](examples/consumer/native-chart.ts)。 | 18 天内有 16 个有效观测。原算法使用此前 28 天内至少 14 次观测，当月 18 日才触发标记。SVG 画出 16 个点、1 个标记。 |
+| [原有 API 客户端](features/providers/feeds.ts) | [自定义传输和导出](examples/consumer/standalone-client.ts)，直接输出睡眠小时数。 | 验证了 Intervals.icu 的请求头和日期参数；模拟响应中的 25,200 秒导出为 7 小时，缺测保留为空。 |
+| [密钥加解密](features/garmin/credential.ts) | [引用方提供存储、API、算法和图表](examples/consumer/only-encryption.ts)。 | 引用方解密后读取三页数据，自己的图画出 16 根柱，最近两次观测相差 −24 毫秒。使用另一把加密密钥会被拒绝。 |
+
+**怎样复现**　在仓库根目录运行以下命令。每个案例都会校验输出，任一断言失败都会使测试失败。
+
+```sh
+npm ci
+npm run test:consumer
+```
+
+要同时验证实际绘图和展开详情，把 `CONSUMER_BROWSER` 设为本机 Chrome 或 Edge 可执行文件的路径。下面是 Windows PowerShell 示例。
+
+```powershell
+$env:CONSUMER_BROWSER = 'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe'
+npm run test:consumer
+```
+
+**接入其他服务的条件**　这四例覆盖了指定的接口和数据结构。实际接入另一家服务时，需要依照它的认证方式、分页、单位和缺测约定编写适配器。自定义 POST 服务在本机运行，Intervals.icu 的响应由测试提供。新厂商的真实账户授权和限流行为需要单独联调。
 
 ## 验证接入
 

@@ -1,5 +1,4 @@
 import {shiftDay} from '../../lib/calendar';
-import type {detectDeviations} from '../analysis/deviations';
 
 export const metricIds=['hrv','sleep','sleepScore','deep','light','rem','awake','resting','heartMin','heartMax','steps','stepGoal','distance','floors','intensity','calories','activeCalories','restCalories','stress'] as const;
 export type HealthMetric=typeof metricIds[number];
@@ -7,7 +6,10 @@ export type TrendRange='30'|'90'|'180'|'365'|'all';
 export type TrendScale='day'|'week'|'month';
 export type TrendPoint={date:string;observed:number}&Record<HealthMetric,number|null>&Record<`${HealthMetric}Count`,number>;
 export type TrendChange={metric:HealthMetric;recent:number;baseline:number;recentCount:number;baselineCount:number;delta:number;notable:boolean};
-export type TrendPayload={today:string;from:string;scale:TrendScale;days:number;observed:number;points:TrendPoint[];deviations:ReturnType<typeof detectDeviations>;comparison:{recentFrom:string;baselineFrom:string;changes:TrendChange[]}};
+export type TrendFlag={date:string;metric:HealthMetric;value:number;median:number;samples:number};
+export type TrendAnnotations={flags:TrendFlag[];assessed:Partial<Record<HealthMetric,number>>;lastObserved:string|null};
+export type MetricSeries={scale:TrendScale;days:number;points:TrendPoint[];deviations:TrendAnnotations};
+export type TrendPayload=MetricSeries & {today:string;from:string;observed:number;comparison:{recentFrom:string;baselineFrom:string;changes:TrendChange[]}};
 
 export const ranges:ReadonlyArray<{id:TrendRange;label:string}>= [
  {id:'30',label:'30 天'},{id:'90',label:'90 天'},{id:'180',label:'半年'},{id:'365',label:'一年'},{id:'all',label:'全部'},

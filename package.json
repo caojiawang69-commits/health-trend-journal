@@ -12,7 +12,8 @@
     "typecheck": "tsc --noEmit --incremental false",
     "db:local": "wrangler d1 migrations apply health-journal --local",
     "start": "wrangler dev --config dist/server/wrangler.json --local --ip 127.0.0.1",
-    "test": "node tests/providers.mjs"
+    "test": "node tests/providers.mjs",
+    "test:consumer": "tsc -p examples/consumer/tsconfig.json && node tests/consumer.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.7.0",
@@ -61,7 +62,8 @@
     "vinext": "1.0.0-beta.5",
     "vite": "8.0.13",
     "wrangler": "4.92.0",
-    "miniflare": "4.20260515.0"
+    "miniflare": "4.20260515.0",
+    "esbuild": "0.28.0"
   },
   "type": "module",
   "overrides": {
