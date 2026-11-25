@@ -1,10 +1,14 @@
 # Health Trend Journal
+内容介绍：
 
+    主要用于将如今的各种提供 API 功能的智能健康设备的身体数据可视化，可以上传给AI分析，AI会标注异常数值如睡眠评分差，心率数值异常等问题。
+    提供模组化功能，如果是同为佳明用户可以直接照搬API相应的组件和登入组件，对于数据结构等个性化问题按照各自的需求和爱好进行设计不必全部照搬。
+    
 用个人基线观察睡眠、心率和活动量怎样随时间变化。趋势页支持近 30 天、90 天、半年、一年和全部历史。周均和月均曲线可以展开到触发偏离标记的具体日期。
 
 **[打开交互演示](https://caojiawang69-commits.github.io/health-trend-journal/)** · **[模块使用手册](MODULES.md)** · [MIT 许可证](LICENSE)
 
-第一次读源码？按你要复用的功能进入手册：[登录组件](MODULES.md#login-ui) · [请求鉴权](MODULES.md#request-auth) · [密钥加密](MODULES.md#encryption) · [API 客户端](MODULES.md#api-client) · [图表数据结构](MODULES.md#chart-data) · [替换分析算法](MODULES.md#analysis)。
+按你要复用的功能进入手册：[登录组件](MODULES.md#login-ui) · [请求鉴权](MODULES.md#request-auth) · [密钥加密](MODULES.md#encryption) · [API 客户端](MODULES.md#api-client) · [图表数据结构](MODULES.md#chart-data) · [替换分析算法](MODULES.md#analysis)。
 
 演示通过确定性函数生成四年数据。可以切换「睡眠与恢复」和「活动与消耗」，在橙色圆点对应的日期查看测量值、此前 28 天中位数和样本数。打开演示无需账户。
 
